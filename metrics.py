@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 
-def compute_apcer_bpcer(targets, predictions):
-    live_mask = (targets == 0)
-    spoof_mask = (targets == 1)
+def compute_metrics(labels, predictions):
+    live_mask = (labels == 0)
+    spoof_mask = (labels == 1)
     
     live_count = np.sum(live_mask)
     spoof_count = np.sum(spoof_mask)
@@ -15,10 +15,14 @@ def compute_apcer_bpcer(targets, predictions):
     live_predictions = predictions[live_mask]
     bpcer = np.sum(live_predictions == 1) / live_count if live_count > 0 else 0
 
-    return apcer, bpcer
+    ace = (apcer + bpcer) / 2
+
+    accuracy = accuracy_score(labels, predictions)
+
+    return apcer, bpcer, ace, accuracy
 
 
-def find_optimal_threshold_for_ace(targets, probabilities):
+def find_optimal_threshold(labels, probabilities, based_on):
     unique_probs = np.unique(probabilities)
     sorted_probs = np.sort(unique_probs)
     midpoints = (sorted_probs[:-1] + sorted_probs[1:]) / 2
@@ -30,20 +34,29 @@ def find_optimal_threshold_for_ace(targets, probabilities):
     
     apcer_values = []
     bpcer_values = []
+    ace_values = []
     accuracy_values = []
     
     for threshold in thresholds:
         predictions = (probabilities >= threshold).astype(int)
-        apcer, bpcer = compute_apcer_bpcer(targets, predictions)
+        apcer, bpcer, ace, accuracy = compute_metrics(labels, predictions)
         apcer_values.append(apcer)
         bpcer_values.append(bpcer)
-        accuracy_values.append(accuracy_score(targets, predictions))
-    
+        ace_values.append(ace)
+        accuracy_values.append(accuracy)
+
     apcer_values = np.array(apcer_values)
     bpcer_values = np.array(bpcer_values)
+    ace_values = np.array(ace_values)
+    accuracy_values = np.array(accuracy_values)
+
+    if based_on == "apcer":
+        optimal_idx = np.argmin(apcer_values)
+    elif based_on == "bpcer":
+        optimal_idx = np.argmin(bpcer_values)
+    elif based_on == "ace":
+        optimal_idx = np.argmin(ace_values)
+    else:
+        optimal_idx = np.argmin(accuracy_values)
     
-    ace = (apcer_values + bpcer_values) / 2
-    acc = 1 - ace
-    optimal_idx = np.argmin(ace)
-    
-    return thresholds[optimal_idx], apcer_values[optimal_idx], bpcer_values[optimal_idx], accuracy_values[optimal_idx], ace[optimal_idx], acc[optimal_idx]
+    return thresholds[optimal_idx], apcer_values[optimal_idx], bpcer_values[optimal_idx], ace_values[optimal_idx], accuracy_values[optimal_idx]
