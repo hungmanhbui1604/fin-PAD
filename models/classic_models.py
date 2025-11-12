@@ -80,22 +80,45 @@ class ResNet50Model(nn.Module):
         return logits
 
 
-def get_model(model_name, num_classes):
-    """
-    Factory function to create classic model with specified architecture
-    
-    Args:
-        model_name (str): Name of the model to use ('dual', 'vgg16', 'resnet50')
-        num_classes (int): Number of output classes for classification
-    
-    Returns:
-        nn.Module: A classic model with the specified architecture
-    """
+def get_model(
+        model_name, 
+        num_classes, 
+        criterion_type='bce_with_logits', 
+        optimizer_type='adam',
+        learning_rate=1e-3, 
+        weight_decay=1e-4, 
+        scheduler_type='cosine_annealing', 
+        num_epochs=100):
+    # Initialize model
     if model_name.lower() == 'dual':
-        return DualModel(num_classes)
+        model = DualModel(num_classes)
     elif model_name.lower() == 'vgg16':
-        return VGG16Model(num_classes)
+        model = VGG16Model(num_classes)
     elif model_name.lower() == 'resnet50':
-        return ResNet50Model(num_classes)
+        model = ResNet50Model(num_classes)
     else:
         raise ValueError(f"Unsupported model: {model_name}. Supported models: 'dual', 'vgg16', 'resnet50'")
+    
+    # Initialize criterion
+    if criterion_type == 'bce_with_logits':
+        criterion = nn.BCEWithLogitsLoss()
+    else:
+        raise ValueError(f"Unknown criterion type: {criterion_type}")
+    
+    # Initialize optimizer
+    if optimizer_type == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    elif optimizer_type == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay, momentum=0.9)
+    else:
+        raise ValueError(f"Unknown optimizer type: {optimizer_type}")
+    
+    # Initialize scheduler
+    if scheduler_type == 'cosine_annealing':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-6)
+    elif scheduler_type == 'step_lr':
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=num_epochs//3, gamma=0.1)
+    else:
+        raise ValueError(f"Unknown scheduler type: {scheduler_type}")
+    
+    return model, criterion, optimizer, scheduler

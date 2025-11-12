@@ -37,7 +37,7 @@ class IntraSensorDataset(Dataset):
 
             if label_name == 'Live':
                 for img_file in tqdm(os.listdir(data_path), desc=f"Loading {phase} Live"):
-                    if img_file.endswith('.png', '.bmp'):
+                    if img_file.endswith(('.png', '.bmp')):
                         image_path = os.path.join(data_path, img_file)
                         self.samples.append((image_path, label_id))
             elif label_name == 'Spoof':

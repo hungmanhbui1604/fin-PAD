@@ -4,7 +4,6 @@ import os
 from PIL import Image
 from tqdm import tqdm
 import argparse
-import shutil
 
 
 def extract_one(
@@ -88,7 +87,6 @@ def extract_all(
         if not image_files:
             continue
 
-        relative_path = os.path.relpath(dirpath, data_dir)
         display_path = os.path.basename(data_dir)
         if relative_path != '.':
             display_path = os.path.join(display_path, relative_path)
@@ -108,13 +106,7 @@ def extract_all(
                 # Use tqdm.write to print messages without breaking the progress bar
                 tqdm.write(f"Error processing {os.path.basename(image_path)}: {str(e)}")
                 
-                # Copy the original image on error
-                try:
-                    output_path = os.path.join(current_output_dir, os.path.basename(image_path))
-                    shutil.copy(image_path, output_path)
-                    tqdm.write(f"Copied original image {os.path.basename(image_path)} to output directory.")
-                except Exception as copy_error:
-                    tqdm.write(f"Failed to copy original image {os.path.basename(image_path)}: {copy_error}")
+                # Skip the error image and continue with the next one
                 continue
     
     print(f"Processing complete! Foreground images saved to {out_dir}")

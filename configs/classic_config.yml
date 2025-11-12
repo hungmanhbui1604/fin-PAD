@@ -1,0 +1,22 @@
+# Dataset Configuration
+YEAR: 'foreground_2013'
+TRAIN_SENSOR: 'Biometrika'
+TEST_SENSOR: 'Biometrika'
+DATASET_PATH: '/home/hmb1604/datasets/LivDet'
+BINARY_CLASS: true
+TRANSFORM_TYPE: 'basic'
+BATCH_SIZE: 8
+NUM_WORKERS: 4
+VALID_SPLIT: 0.1
+
+# Model Configuration
+MODEL_NAME: 'dual'
+CRITERION_TYPE: 'bce_with_logits'
+OPTIMIZER_TYPE: 'adam'
+LEARNING_RATE: 0.001
+WEIGHT_DECAY: 0.0001
+SCHEDULER_TYPE: 'cosine_annealing'
+NUM_EPOCHS: 1
+
+THRESHOLD: 0.5
+MODEL_SAVE_PATH: './ckpts/classic_model.pth'
