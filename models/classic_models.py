@@ -6,17 +6,17 @@ import torchvision.models as models
 class DualModel(nn.Module):
     def __init__(self, num_classes):
         super(DualModel, self).__init__()
-        
+
         self.vgg16 = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
         self.vgg16.avgpool = nn.Identity()
         self.vgg16.classifier = nn.Identity()
-        
+
         self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
         self.resnet50.avgpool = nn.Identity()
         self.resnet50.fc = nn.Identity()
-        
+
         combined_features = 25088 + 100352
-        
+
         self.classifier = nn.Sequential(
             nn.Linear(combined_features, 256),
             nn.ReLU(inplace=True),
@@ -24,24 +24,24 @@ class DualModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(128, num_classes)
         )
-    
+
     def forward(self, x):
         vgg_features = self.vgg16(x)            # [B, 25088]
         resnet_features = self.resnet50(x)      # [B, 100352]
         combined_features = torch.cat([vgg_features, resnet_features], dim=1)  # [B, 125440]
         logits = self.classifier(combined_features) # [B, num_classes]
-        
+
         return logits
 
 
 class VGG16Model(nn.Module):
     def __init__(self, num_classes):
         super(VGG16Model, self).__init__()
-        
+
         self.vgg16 = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
         self.vgg16.avgpool = nn.Identity()
         self.vgg16.classifier = nn.Identity()
-        
+
         self.classifier = nn.Sequential(
             nn.Linear(25088, 256),
             nn.ReLU(inplace=True),
@@ -49,22 +49,22 @@ class VGG16Model(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(128, num_classes)
         )
-    
+
     def forward(self, x):
         features = self.vgg16(x)            # [B, 25088]
         logits = self.classifier(features)  # [B, num_classes]
-        
+
         return logits
 
 
 class ResNet50Model(nn.Module):
     def __init__(self, num_classes):
         super(ResNet50Model, self).__init__()
-        
+
         self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
         self.resnet50.avgpool = nn.Identity()
         self.resnet50.fc = nn.Identity()
-        
+
         self.classifier = nn.Sequential(
             nn.Linear(100352, 256),
             nn.ReLU(inplace=True),
@@ -72,22 +72,66 @@ class ResNet50Model(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(128, num_classes)
         )
-    
+
     def forward(self, x):
         features = self.resnet50(x)            # [B, 100352]
         logits = self.classifier(features)  # [B, num_classes]
-        
+
+        return logits
+
+
+class MobileNetV2Model(nn.Module):
+    def __init__(self, num_classes):
+        super(MobileNetV2Model, self).__init__()
+
+        self.mobilenet_v2 = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2)
+        self.mobilenet_v2.classifier = nn.Identity()
+
+        self.classifier = nn.Sequential(
+            nn.Linear(1280, 256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, num_classes)
+        )
+
+    def forward(self, x):
+        features = self.mobilenet_v2(x)            # [B, 1280]
+        logits = self.classifier(features)         # [B, num_classes]
+
+        return logits
+
+
+class EfficientNetB0Model(nn.Module):
+    def __init__(self, num_classes):
+        super(EfficientNetB0Model, self).__init__()
+
+        self.efficientnet_b0 = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1)
+        self.efficientnet_b0.classifier = nn.Identity()
+
+        self.classifier = nn.Sequential(
+            nn.Linear(1280, 256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, num_classes)
+        )
+
+    def forward(self, x):
+        features = self.efficientnet_b0(x)            # [B, 1280]
+        logits = self.classifier(features)            # [B, num_classes]
+
         return logits
 
 
 def get_model(
-        model_name, 
-        num_classes, 
-        criterion_type='bce_with_logits', 
+        model_name,
+        num_classes,
+        criterion_type='bce_with_logits',
         optimizer_type='adam',
-        learning_rate=1e-3, 
-        weight_decay=1e-4, 
-        scheduler_type='cosine_annealing', 
+        learning_rate=1e-3,
+        weight_decay=1e-4,
+        scheduler_type='cosine_annealing',
         num_epochs=100):
     # Initialize model
     if model_name.lower() == 'dual':
@@ -96,29 +140,33 @@ def get_model(
         model = VGG16Model(num_classes)
     elif model_name.lower() == 'resnet50':
         model = ResNet50Model(num_classes)
+    elif model_name.lower() == 'mobilenet_v2':
+        model = MobileNetV2Model(num_classes)
+    elif model_name.lower() == 'efficientnet_b0':
+        model = EfficientNetB0Model(num_classes)
     else:
-        raise ValueError(f"Unsupported model: {model_name}. Supported models: 'dual', 'vgg16', 'resnet50'")
-    
+        raise ValueError(f"Unsupported model: {model_name}. Supported models: 'dual', 'vgg16', 'resnet50', 'mobilenet_v2', 'efficientnet_b0'")
+
     # Initialize criterion
     if criterion_type == 'bce_with_logits':
         criterion = nn.BCEWithLogitsLoss()
     else:
-        raise ValueError(f"Unknown criterion type: {criterion_type}")
-    
+        raise ValueError(f"Unknown criterion type: {criterion_type}. Supported criterion types: 'bce_with_logits'")
+
     # Initialize optimizer
     if optimizer_type == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     elif optimizer_type == 'sgd':
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay, momentum=0.9)
     else:
-        raise ValueError(f"Unknown optimizer type: {optimizer_type}")
-    
+        raise ValueError(f"Unknown optimizer type: {optimizer_type}. Supported optimizer types: 'adam', 'sgd'")
+
     # Initialize scheduler
     if scheduler_type == 'cosine_annealing':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-6)
     elif scheduler_type == 'step_lr':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=num_epochs//3, gamma=0.1)
     else:
-        raise ValueError(f"Unknown scheduler type: {scheduler_type}")
-    
+        raise ValueError(f"Unknown scheduler type: {scheduler_type}. Supported scheduler types: 'cosine_annealing', 'step_lr'")
+
     return model, criterion, optimizer, scheduler

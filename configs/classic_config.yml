@@ -1,8 +1,8 @@
 # Dataset Configuration
-YEAR: 'foreground_2013'
-TRAIN_SENSOR: 'Biometrika'
-TEST_SENSOR: 'Biometrika'
-DATASET_PATH: '/home/hmb1604/datasets/LivDet'
+YEAR: '2015'
+TRAIN_SENSOR: 'CrossMatch'
+TEST_SENSOR: 'CrossMatch'
+DATASET_PATH: './data'
 BINARY_CLASS: true
 TRANSFORM_TYPE: 'basic'
 BATCH_SIZE: 8

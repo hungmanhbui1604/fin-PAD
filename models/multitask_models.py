@@ -117,6 +117,53 @@ class EfficientNetB0Backbone(nn.Module):
         return x
 
 
+class VGG16Backbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Load pre-trained VGG16
+        vgg16 = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
+        self.features = vgg16.features
+        self.avgpool = vgg16.avgpool
+
+        # Feature dimension after feature extractor (VGG16's flattened features)
+        self.feature_dim = 25088
+
+    def forward(self, x):
+        # Extract features using VGG16 backbone
+        x = self.features(x)
+        x = self.avgpool(x)
+
+        # Flatten the features
+        x = torch.flatten(x, 1)
+
+        return x
+
+
+class DualModelBackbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        # Exact same setup as DualModel in classic_models.py
+        self.vgg16 = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
+        self.vgg16.avgpool = nn.Identity()
+        self.vgg16.classifier = nn.Identity()
+
+        self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        self.resnet50.avgpool = nn.Identity()
+        self.resnet50.fc = nn.Identity()
+
+        # Same feature dimensions as DualModel
+        self.feature_dim = 25088 + 100352
+
+    def forward(self, x):
+        # Exact same feature extraction as DualModel in classic_models.py
+        vgg_features = self.vgg16(x)            # [B, 25088]
+        resnet_features = self.resnet50(x)      # [B, 100352]
+        combined_features = torch.cat([vgg_features, resnet_features], dim=1)  # [B, 125440]
+
+        return combined_features
+
+
 def get_model(
     backbone_name,
     num_material_classes,
@@ -135,8 +182,12 @@ def get_model(
         backbone = ResNet50Backbone()
     elif backbone_name.lower() == 'efficientnetb0':
         backbone = EfficientNetB0Backbone()
+    elif backbone_name.lower() == 'vgg16':
+        backbone = VGG16Backbone()
+    elif backbone_name.lower() == 'dual':
+        backbone = DualModelBackbone()
     else:
-        raise ValueError(f"Unsupported backbone: {backbone_name}. Supported backbones: 'mobilenetv2', 'resnet50', 'efficientnetb0'")
+        raise ValueError(f"Unsupported backbone: {backbone_name}. Supported backbones: 'mobilenetv2', 'resnet50', 'efficientnetb0', 'vgg16', 'dual'")
     
     # Create the multitask model
     model = MultitaskModel(backbone, num_material_classes)

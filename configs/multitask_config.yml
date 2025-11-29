@@ -1,14 +1,14 @@
-YEAR: 'foreground_2015'
+YEAR: '2015'
 TRAIN_SENSOR: 'CrossMatch'
 TEST_SENSOR: 'CrossMatch'
-DATASET_PATH: '/home/hmb1604/datasets/LivDet'
+DATASET_PATH: './data'
 BINARY_CLASS: false
 TRANSFORM_TYPE: 'basic'
 BATCH_SIZE: 8
 NUM_WORKERS: 4
 VALID_SPLIT: 0.1
 
-BACKBONE_NAME: 'mobilenetv2'
+BACKBONE_NAME: 'dual'
 SPOOF_CRITERION_TYPE: 'bce_with_logits'
 MATERIAL_CRITERION_TYPE: 'cross_entropy'
 OPTIMIZER_TYPE: 'adam'
@@ -20,4 +20,4 @@ NUM_EPOCHS: 1
 THRESHOLD: 0.5
 SPOOF_WEIGHT: 1.0
 MATERIAL_WEIGHT: 1.0
-MODEL_SAVE_PATH: './ckpts/model.pth'
+MODEL_SAVE_PATH: './ckpts/multitask_model.pth'

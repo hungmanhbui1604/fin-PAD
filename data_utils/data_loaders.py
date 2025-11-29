@@ -246,3 +246,73 @@ def get_dataloader(
         test_dataset = TransformedDataset(dataset, transform['Test'])
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         return test_loader, label_map
+
+
+def setup_classic_data_loaders(config):
+    """Setup train, validation, and test data loaders for binary classification"""
+    from .transforms import get_transforms
+
+    transform = get_transforms(config['TRANSFORM_TYPE'])
+
+    train_loader, val_loader, train_label_map = get_dataloader(
+        year=config['YEAR'],
+        train_sensor=config['TRAIN_SENSOR'],
+        test_sensor=config['TEST_SENSOR'],
+        dataset_path=config['DATASET_PATH'],
+        train=True,
+        binary_class=config['BINARY_CLASS'],
+        transform=transform,
+        batch_size=config['BATCH_SIZE'],
+        num_workers=config['NUM_WORKERS'],
+        val_split=config['VALID_SPLIT']
+    )
+
+    test_loader, test_label_map = get_dataloader(
+        year=config['YEAR'],
+        train_sensor=config['TRAIN_SENSOR'],
+        test_sensor=config['TEST_SENSOR'],
+        dataset_path=config['DATASET_PATH'],
+        train=False,
+        binary_class=config['BINARY_CLASS'],
+        transform=transform,
+        batch_size=config['BATCH_SIZE'],
+        num_workers=config['NUM_WORKERS'],
+        val_split=config['VALID_SPLIT']
+    )
+
+    return train_loader, val_loader, test_loader
+
+
+def setup_multitask_data_loaders(config):
+    """Setup train, validation, and test data loaders for multitask learning"""
+    from .transforms import get_transforms
+
+    transform = get_transforms(config['TRANSFORM_TYPE'])
+
+    train_loader, val_loader, train_label_map = get_dataloader(
+        year=config['YEAR'],
+        train_sensor=config['TRAIN_SENSOR'],
+        test_sensor=config['TEST_SENSOR'],
+        dataset_path=config['DATASET_PATH'],
+        train=True,
+        binary_class=config['BINARY_CLASS'],
+        transform=transform,
+        batch_size=config['BATCH_SIZE'],
+        num_workers=config['NUM_WORKERS'],
+        val_split=config['VALID_SPLIT']
+    )
+
+    test_loader, test_label_map = get_dataloader(
+        year=config['YEAR'],
+        train_sensor=config['TRAIN_SENSOR'],
+        test_sensor=config['TEST_SENSOR'],
+        dataset_path=config['DATASET_PATH'],
+        train=False,
+        binary_class=config['BINARY_CLASS'],
+        transform=transform,
+        batch_size=config['BATCH_SIZE'],
+        num_workers=config['NUM_WORKERS'],
+        val_split=config['VALID_SPLIT']
+    )
+
+    return train_loader, val_loader, test_loader, train_label_map
