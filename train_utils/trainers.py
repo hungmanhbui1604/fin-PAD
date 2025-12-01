@@ -115,6 +115,10 @@ class ClassicTrainer:
 
     def setup_wandb(self):
         """Initialize wandb for experiment tracking"""
+        # Login to wandb using API key from config
+        if self.config.get('WANDB_API_KEY'):
+            wandb.login(key=self.config['WANDB_API_KEY'])
+
         wandb.init(
             project="FinPAD",
             name=f"classic_{self.config['MODEL_NAME']}_{self.config['YEAR']}_{self.config['TRAIN_SENSOR']}_{self.config['TEST_SENSOR']}",
@@ -388,6 +392,10 @@ class MultitaskTrainer:
 
     def setup_wandb(self):
         """Initialize wandb for experiment tracking"""
+        # Login to wandb using API key from config
+        if self.config.get('WANDB_API_KEY'):
+            wandb.login(key=self.config['WANDB_API_KEY'])
+
         wandb.init(
             project="FinPAD",
             name=f"multitask_{self.config['BACKBONE_NAME']}_{self.config['YEAR']}_{self.config['TRAIN_SENSOR']}_{self.config['TEST_SENSOR']}",

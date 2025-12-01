@@ -164,6 +164,25 @@ class DualModelBackbone(nn.Module):
         return combined_features
 
 
+class SigLIP2Backbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        try:
+            from transformers import SiglipVisionModel
+            self.siglip = SiglipVisionModel.from_pretrained('google/siglip2-base-patch16-224')
+        except ImportError:
+            raise ImportError("transformers library is required for SigLIP2. Install with: pip install transformers>=4.36.0")
+
+        # Feature dimension for SigLIP2-Base
+        self.feature_dim = 768
+
+    def forward(self, x):
+        # SigLIP 2 expects pixel_values in range [-1, 1]
+        outputs = self.siglip(pixel_values=x)
+        # Use [CLS] token (first token) for classification
+        return outputs.pooler_output  # or outputs.last_hidden_state[:, 0, :]
+
+
 def get_model(
     backbone_name,
     num_material_classes,
@@ -186,8 +205,10 @@ def get_model(
         backbone = VGG16Backbone()
     elif backbone_name.lower() == 'dual':
         backbone = DualModelBackbone()
+    elif backbone_name.lower() == 'siglip2':
+        backbone = SigLIP2Backbone()
     else:
-        raise ValueError(f"Unsupported backbone: {backbone_name}. Supported backbones: 'mobilenetv2', 'resnet50', 'efficientnetb0', 'vgg16', 'dual'")
+        raise ValueError(f"Unsupported backbone: {backbone_name}. Supported backbones: 'mobilenetv2', 'resnet50', 'efficientnetb0', 'vgg16', 'dual', 'siglip2'")
     
     # Create the multitask model
     model = MultitaskModel(backbone, num_material_classes)

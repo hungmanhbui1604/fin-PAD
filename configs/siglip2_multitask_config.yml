@@ -3,17 +3,17 @@ TRAIN_SENSOR: 'CrossMatch'
 TEST_SENSOR: 'CrossMatch'
 DATASET_PATH: './data'
 BINARY_CLASS: false
-TRANSFORM_TYPE: 'basic'
+TRANSFORM_TYPE: 'siglip2'  # Use SigLIP 2 transforms
 BATCH_SIZE: 8
 NUM_WORKERS: 4
 VALID_SPLIT: 0.1
 
-BACKBONE_NAME: 'dual'
+BACKBONE_NAME: 'siglip2'
 SPOOF_CRITERION_TYPE: 'bce_with_logits'
 MATERIAL_CRITERION_TYPE: 'cross_entropy'
 OPTIMIZER_TYPE: 'adam'
-LEARNING_RATE: 0.001
-WEIGHT_DECAY: 0.0001
+LEARNING_RATE: 0.0001  # Lower for transformer fine-tuning
+WEIGHT_DECAY: 0.01  # Higher regularization for transformers
 SCHEDULER_TYPE: 'cosine_annealing'
 NUM_EPOCHS: 1
 
@@ -21,4 +21,4 @@ THRESHOLD: 0.5
 WANDB_API_KEY: ''
 SPOOF_WEIGHT: 1.0
 MATERIAL_WEIGHT: 1.0
-MODEL_SAVE_PATH: './ckpts/multitask_model.pth'
+MODEL_SAVE_PATH: './ckpts/siglip2_multitask_model.pth'

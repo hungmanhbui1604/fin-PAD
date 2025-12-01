@@ -19,4 +19,5 @@ SCHEDULER_TYPE: 'cosine_annealing'
 NUM_EPOCHS: 1
 
 THRESHOLD: 0.5
+WANDB_API_KEY: ''
 MODEL_SAVE_PATH: './ckpts/classic_model.pth'
