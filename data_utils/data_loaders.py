@@ -220,11 +220,11 @@ def create_data_loader(
     # Intra-sensor
     if train_sensor == test_sensor:
         sensor = train_sensor
-        dataset = IntraSensorDataset(year_path, sensor, train=train, binary_class=binary_class)
         print(f"Creating Intra-sensor {sensor} {phase} dataset")
+        dataset = IntraSensorDataset(year_path, sensor, train=train, binary_class=binary_class)
     else: # Cross-sensor
-        dataset = CrossSensorDataset(year_path, train_sensor, test_sensor, train=train, binary_class=binary_class)
         print(f"Creating Cross-sensor {train_sensor}-{test_sensor} {phase} dataset")
+        dataset = CrossSensorDataset(year_path, train_sensor, test_sensor, train=train, binary_class=binary_class)
     label_map = dataset.label_map
 
     use_pin_memory = True if torch.cuda.is_available() else False
@@ -270,7 +270,7 @@ def get_classic_data_loaders(config):
         val_split=config['VALID_SPLIT'],
         seed=config['SEED']
     )
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, train_label_map
 
 
 def get_multitask_data_loaders(config):

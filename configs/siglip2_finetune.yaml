@@ -1,0 +1,18 @@
+# Data configuration
+YEAR_PATH: './data'
+TRAIN_SENSOR: 'CrossMatch'
+TEST_SENSOR: 'CrossMatch'
+BINARY_CLASS: true
+TRANSFORM_TYPE: 'siglip2'
+BATCH_SIZE: 32
+NUM_WORKERS: 4
+VALID_SPLIT: 0.1
+SEED: 42
+
+# SigLIP2 model configuration
+MODEL_NAME: 'google/siglip2-base-patch16-224'
+
+# Training configuration
+EPOCHS: 10
+LR: 2e-5
+OUTPUT_DIR: './checkpoints'

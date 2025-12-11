@@ -7,6 +7,8 @@ import argparse
 from transformers import AutoProcessor, AutoModel
 from data_utils.data_loaders import create_data_loader
 from data_utils.transforms import get_transforms
+import os
+from train_utils.metrics import compute_metrics
 
 
 class SigLIP2ZeroShot:
@@ -15,7 +17,7 @@ class SigLIP2ZeroShot:
         self.device = device
 
         # Load SigLIP2 processor
-        self.processor = AutoProcessor.from_pretrained(model_name)
+        self.processor = AutoProcessor.from_pretrained(model_name, use_fast=True)
 
         # Load SigLIP2 model (with both vision and text components)
         self.model = AutoModel.from_pretrained(model_name).to(device)
@@ -105,7 +107,7 @@ class SigLIP2ZeroShot:
         binary_total = 0
 
         print("\nEvaluating dataset...")
-        for images, labels in enumerate(tqdm(dataloader, desc="Processing batches")):
+        for images, labels in tqdm(dataloader, desc="Processing batches"):
             # Get predictions for this batch
             pred_indices, probs = self.predict_batch(images, text_features)
 
@@ -143,6 +145,9 @@ class SigLIP2ZeroShot:
         # Confusion matrix
         cm = confusion_matrix(all_labels, all_predictions)
 
+        # PAD metrics
+        apcer, bpcer, ace, accuracy = compute_metrics(all_labels, all_predictions)
+
         # Print results
         print("\n=== Zero-Shot Evaluation Results ===")
         print(f"Overall Accuracy: {accuracy:.4f}")
@@ -166,21 +171,18 @@ class SigLIP2ZeroShot:
             row = " ".join(f"{cm[i,j]:5d}" for j in range(len(label_names)))
             print(f"{label_name[:8]:8s} {row}")
 
-        return {
-            'accuracy': accuracy,
-            'binary_accuracy': binary_accuracy,
-            'precision': precision,
-            'recall': recall,
-            'f1': f1,
-            'precision_per_class': precision_per_class.tolist() if hasattr(precision_per_class, 'tolist') else precision_per_class,
-            'recall_per_class': recall_per_class.tolist() if hasattr(recall_per_class, 'tolist') else recall_per_class,
-            'f1_per_class': f1_per_class.tolist() if hasattr(f1_per_class, 'tolist') else f1_per_class,
-            'confusion_matrix': cm.tolist(),
-            'label_names': label_names
-        }
+        print("\n=== PAD Metrics ===")
+        print(f"APCER: {apcer*100:.2f}%")
+        print(f"BPCER: {bpcer*100:.2f}%")
+        print(f"ACE: {ace*100:.2f}%")
+        print(f"Accuracy: {accuracy*100:.2f}%")
+        print(f"Accuracy*: {(1-ace)*100:.2f}%")
+
 
 
 def main():
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    
     parser = argparse.ArgumentParser(description='Zero-shot evaluation with SigLIP2')
     parser.add_argument('--config', type=str, required=True, help='Path to config file')
     args = parser.parse_args()
@@ -208,7 +210,8 @@ def main():
         train=False,
         binary_class=config['BINARY_CLASS'],
         transform=get_transforms(config['TRANSFORM_TYPE']),
-        batch_size=config['BATCH_SIZE']
+        batch_size=config['BATCH_SIZE'],
+        num_workers=config['NUM_WORKERS']
     )
     print(f"Test label map: {label_map}")
 
